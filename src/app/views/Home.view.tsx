@@ -1,18 +1,19 @@
 import { Col, Divider, Row, Space, Typography } from 'antd';
+import userPageTitle from '../../core/hooks/usePageTitle';
 import CompanyMetrics from '../features/CompanyMetrics';
 import LatestPosts from '../features/LatestPosts';
 
 const { Title, Paragraph } = Typography;
 
 function HomeView() {
+  userPageTitle('Home');
+
   return (
     <Space direction='vertical' size={'small'} style={{ maxWidth: '100%' }}>
       <Row>
         <Col span={24}>
           <Title level={2}>Olá, José Souza</Title>
-          <Paragraph>
-            Este é um resumo da empresa nos últimos 12 meses
-          </Paragraph>
+          <Paragraph>Este é um resumo da empresa nos últimos 12 meses</Paragraph>
         </Col>
         <Col span={24}>
           <CompanyMetrics />

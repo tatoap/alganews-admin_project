@@ -9,14 +9,15 @@ import {
   Input,
   Descriptions,
   Tooltip,
+  Row,
 } from 'antd';
-import format from 'date-fns/format';
 import { useEffect } from 'react';
 import { User } from 'tato_ap-sdk';
-import { EyeOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
+import { EyeOutlined, EditOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import useUsers from '../../core/hooks/useUsers';
 import { ColumnProps } from 'antd/lib/table';
 import { Link } from 'react-router-dom';
+import format from 'date-fns/format';
 
 export default function UserList() {
   const { users, fetchUsers, toggleUserStatus, fetching } = useUsers();
@@ -82,6 +83,11 @@ export default function UserList() {
 
   return (
     <>
+      <Row justify={'end'}>
+        <Button icon={<ReloadOutlined />} onClick={() => fetchUsers()} loading={fetching}>
+          Atualizar
+        </Button>
+      </Row>
       <Table<User.Summary>
         loading={fetching}
         dataSource={users}
@@ -199,7 +205,9 @@ export default function UserList() {
               return (
                 <>
                   <Tooltip title={'Visualizar usuário'} placement={'left'}>
-                    <Button size='small' icon={<EyeOutlined />} />
+                    <Link to={`/usuarios/${id}`}>
+                      <Button size='small' icon={<EyeOutlined />} />
+                    </Link>
                   </Tooltip>
 
                   <Tooltip title={'Editar usuário'} placement={'right'}>

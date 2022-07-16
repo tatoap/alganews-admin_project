@@ -19,6 +19,8 @@ import ImageCrop from 'antd-img-crop';
 import MaskedInput from 'antd-mask-input';
 import CustomError from 'tato_ap-sdk/dist/CustomError';
 import { Moment } from 'moment';
+import { useNavigate } from 'react-router-dom';
+import CurrencyInput from '../components/CurrencyInput';
 
 type UserFormType = {
   createdAt: Moment;
@@ -28,13 +30,16 @@ type UserFormType = {
 
 interface UserFormProps {
   user?: UserFormType;
-  onUpdate?: (user: User.Input) => any;
+  onUpdate?: (user: User.Input) => Promise<any>;
 }
 
 export default function UserForm(props: UserFormProps) {
+  const navigate = useNavigate();
   const [form] = Form.useForm<User.Input>();
   const [activeTab, setActiveTab] = useState<'personal' | 'bankAccount'>('personal');
   const [avatar, setAvatar] = useState(props.user?.avatarUrls.default || '');
+  const [loading, setLoading] = useState(false);
+  const [isEditorRole, setIsEditorRole] = useState(props.user?.role === 'EDITOR');
 
   const handleAvatarUpload = useCallback(async (file: File) => {
     const avatarSource = await FileService.upload(file);
@@ -52,6 +57,7 @@ export default function UserForm(props: UserFormProps) {
       form={form}
       layout='vertical'
       onFinish={async (user: User.Input) => {
+        setLoading(true);
         try {
           const userDTO = {
             ...user,
@@ -59,9 +65,11 @@ export default function UserForm(props: UserFormProps) {
             taxpayerId: user.taxpayerId.replace(/\D/g, ''),
           };
 
-          if (props.user) return props.onUpdate && props.onUpdate(userDTO);
+          if (props.user)
+            return props.onUpdate && props.onUpdate(userDTO).finally(() => setLoading(false));
 
           await UserService.insertNewUser(userDTO);
+          navigate('/usuarios', { replace: true });
           notification.success({
             message: 'Sucesso',
             description: 'Usuário criado com sucesso',
@@ -93,6 +101,8 @@ export default function UserForm(props: UserFormProps) {
               message: 'Houve um erro',
             });
           }
+        } finally {
+          setLoading(false);
         }
       }}
       onFinishFailed={(fields) => {
@@ -122,41 +132,43 @@ export default function UserForm(props: UserFormProps) {
       initialValues={props.user}
     >
       <Row gutter={24} align={'middle'}>
-        <Col lg={4}>
-          <ImageCrop shape={'round'} rotate grid aspect={1}>
-            <Upload
-              maxCount={1}
-              onRemove={() => {
-                setAvatar('');
-              }}
-              beforeUpload={(file) => {
-                handleAvatarUpload(file);
-                return false;
-              }}
-              fileList={[
-                ...(avatar
-                  ? [
-                      {
-                        name: 'Avatar',
-                        uid: '',
-                      },
-                    ]
-                  : []),
-              ]}
-            >
-              <Avatar
-                icon={<UserOutlined />}
-                style={{ cursor: 'pointer' }}
-                src={avatar}
-                size={128}
-              />
-            </Upload>
-          </ImageCrop>
-          <Form.Item name={'avatarUrl'} hidden>
-            <Input hidden />
-          </Form.Item>
+        <Col lg={4} xs={24}>
+          <Row justify={'center'}>
+            <ImageCrop shape={'round'} rotate grid aspect={1}>
+              <Upload
+                maxCount={1}
+                onRemove={() => {
+                  setAvatar('');
+                }}
+                beforeUpload={(file) => {
+                  handleAvatarUpload(file);
+                  return false;
+                }}
+                fileList={[
+                  ...(avatar
+                    ? [
+                        {
+                          name: 'Avatar',
+                          uid: '',
+                        },
+                      ]
+                    : []),
+                ]}
+              >
+                <Avatar
+                  icon={<UserOutlined />}
+                  style={{ cursor: 'pointer' }}
+                  src={avatar}
+                  size={128}
+                />
+              </Upload>
+            </ImageCrop>
+            <Form.Item name={'avatarUrl'} hidden>
+              <Input hidden />
+            </Form.Item>
+          </Row>
         </Col>
-        <Col lg={10}>
+        <Col lg={10} xs={24}>
           <Form.Item
             label={'Nome'}
             name={'name'}
@@ -186,7 +198,7 @@ export default function UserForm(props: UserFormProps) {
             <DatePicker style={{ width: '100%' }} format={'DD/MM/yyyy'} />
           </Form.Item>
         </Col>
-        <Col lg={10}>
+        <Col lg={10} xs={24}>
           <Form.Item
             label={'Bio'}
             name={'bio'}
@@ -204,10 +216,10 @@ export default function UserForm(props: UserFormProps) {
             <Input.TextArea rows={5} />
           </Form.Item>
         </Col>
-        <Col lg={24}>
+        <Col lg={24} xs={24}>
           <Divider />
         </Col>
-        <Col lg={12}>
+        <Col lg={12} xs={24}>
           <Form.Item
             label={'Perfil do usuário'}
             name={'role'}
@@ -223,14 +235,17 @@ export default function UserForm(props: UserFormProps) {
               },
             ]}
           >
-            <Select placeholder={'Selecione um perfil'}>
+            <Select
+              placeholder={'Selecione um perfil'}
+              onChange={(value) => setIsEditorRole(value === 'EDITOR')}
+            >
               <Select.Option value={'EDITOR'}>Editor</Select.Option>
               <Select.Option value={'ASSISTANT'}>Assistente</Select.Option>
               <Select.Option value={'MANAGER'}>Gerente</Select.Option>
             </Select>
           </Form.Item>
         </Col>
-        <Col lg={12}>
+        <Col lg={12} xs={24}>
           <Form.Item
             label={'Email'}
             name={'email'}
@@ -248,7 +263,7 @@ export default function UserForm(props: UserFormProps) {
             <Input type={'email'} placeholder={'E.g.: contato@renatoramos.com'} />
           </Form.Item>
         </Col>
-        <Col lg={24}>
+        <Col lg={24} xs={24}>
           <Divider />
         </Col>
         <Col lg={24}>
@@ -259,7 +274,7 @@ export default function UserForm(props: UserFormProps) {
           >
             <Tabs.TabPane key={'personal'} tab={'Dados pessoais'}>
               <Row gutter={24}>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'País'}
                     name={['location', 'country']}
@@ -277,7 +292,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder='E.g.: Brasil' />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Estado'}
                     name={['location', 'state']}
@@ -295,7 +310,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder='E.g.: São Paulo' />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Cidade'}
                     name={['location', 'city']}
@@ -313,7 +328,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder='E.g.: Guarulhos' />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Telefone'}
                     name={'phone'}
@@ -331,7 +346,7 @@ export default function UserForm(props: UserFormProps) {
                     <MaskedInput mask={'(00) [0]0000-0000'} placeholder={'(11) 99999-9999'} />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'CPF'}
                     name={'taxpayerId'}
@@ -349,72 +364,87 @@ export default function UserForm(props: UserFormProps) {
                     <MaskedInput mask={'000.000.000-00'} placeholder={'111.222.3333-44'} />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
-                  <Form.Item
-                    label={'Preço por palavra'}
-                    name={'pricePerWord'}
-                    rules={[
-                      {
-                        required: true,
-                        message: 'O campo é obrigatório',
-                      },
-                    ]}
-                  >
-                    <Input placeholder='0' />
-                  </Form.Item>
-                </Col>
-                {[1, 2, 3].map((_, index) => {
-                  return (
-                    <React.Fragment key={index}>
-                      <Col lg={6}>
-                        <Form.Item
-                          label={'Habilidade'}
-                          name={['skills', index, 'name']}
-                          rules={[
-                            {
-                              required: true,
-                              message: 'O campo é obrigatório',
-                            },
-                            {
-                              max: 50,
-                              message: 'A habilidade não pode ter mais de 50 caracteres',
-                            },
-                          ]}
-                        >
-                          <Input placeholder='E.g.: JavaScript' />
-                        </Form.Item>
-                      </Col>
-                      <Col lg={2}>
-                        <Form.Item
-                          label={'%'}
-                          name={['skills', index, 'percentage']}
-                          rules={[
-                            {
-                              required: true,
-                              message: '',
-                            },
-                            {
-                              async validator(field, value) {
-                                if (isNaN(Number(value))) throw new Error('Apenas números');
+                {isEditorRole && (
+                  <>
+                    <Col lg={8} xs={24}>
+                      <Form.Item
+                        label={'Preço por palavra'}
+                        name={'pricePerWord'}
+                        rules={[
+                          {
+                            required: true,
+                            message: 'O campo é obrigatório',
+                          },
+                          {
+                            type: 'number',
+                            min: 0.01,
+                            message: 'O valor mínimo é 1 centavo',
+                          },
+                        ]}
+                      >
+                        <CurrencyInput
+                          onChange={(e, value) => {
+                            form.setFieldsValue({
+                              pricePerWord: value,
+                            });
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    {[1, 2, 3].map((_, index) => {
+                      return (
+                        <React.Fragment key={index}>
+                          <Col lg={6} xs={18}>
+                            <Form.Item
+                              label={'Habilidade'}
+                              name={['skills', index, 'name']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: 'O campo é obrigatório',
+                                },
+                                {
+                                  max: 50,
+                                  message: 'A habilidade não pode ter mais de 50 caracteres',
+                                },
+                              ]}
+                            >
+                              <Input placeholder='E.g.: JavaScript' />
+                            </Form.Item>
+                          </Col>
+                          <Col lg={2} xs={6}>
+                            <Form.Item
+                              label={'%'}
+                              name={['skills', index, 'percentage']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '',
+                                },
+                                {
+                                  async validator(field, value) {
+                                    if (isNaN(Number(value))) throw new Error('Apenas números');
 
-                                if (Number(value) < 0) throw new Error('Min. 0');
+                                    if (Number(value) < 0) throw new Error('Min. 0');
 
-                                if (Number(value) > 100) throw new Error('Máx. 100');
-                              },
-                            },
-                          ]}
-                        >
-                          <Input />
-                        </Form.Item>
-                      </Col>
-                    </React.Fragment>
-                  );
-                })}
+                                    if (Number(value) > 100) throw new Error('Máx. 100');
+                                  },
+                                },
+                              ]}
+                            >
+                              <Input />
+                            </Form.Item>
+                          </Col>
+                        </React.Fragment>
+                      );
+                    })}
+                  </>
+                )}
               </Row>
             </Tabs.TabPane>
             <Tabs.TabPane key={'bankAccount'} tab={'Dados bancários'} forceRender>
               <Row gutter={24}>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Instituição'}
                     name={['bankAccount', 'bankCode']}
@@ -436,7 +466,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder='260' />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Agência'}
                     name={['bankAccount', 'agency']}
@@ -458,7 +488,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder={'0001'} />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Conta (sem dígito)'}
                     name={['bankAccount', 'number']}
@@ -480,7 +510,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder={'12345'} />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Dígito'}
                     name={['bankAccount', 'digit']}
@@ -502,7 +532,7 @@ export default function UserForm(props: UserFormProps) {
                     <Input placeholder={'1'} />
                   </Form.Item>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} xs={24}>
                   <Form.Item
                     label={'Tipo de conta'}
                     name={['bankAccount', 'type']}
@@ -523,10 +553,10 @@ export default function UserForm(props: UserFormProps) {
             </Tabs.TabPane>
           </Tabs>
         </Col>
-        <Col lg={24}>
+        <Col lg={24} xs={24}>
           <Row justify={'end'}>
-            <Button type={'primary'} htmlType={'submit'}>
-              Cadastrar usuário
+            <Button type={'primary'} htmlType={'submit'} loading={loading}>
+              {props.user ? 'Atualizar usuário' : 'Cadastrar usuário'}
             </Button>
           </Row>
         </Col>

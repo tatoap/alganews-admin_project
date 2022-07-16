@@ -9,6 +9,7 @@ import Home from './views/Home.view';
 import PaymentCreateView from './views/PaymentCreate.view';
 import PaymentListView from './views/PaymentList.view';
 import UserCreateView from './views/UserCreate.view';
+import UserDetailsView from './views/UserDetails.view';
 import UserEditView from './views/UserEdit.view';
 import UserListView from './views/UserList.view';
 
@@ -45,6 +46,7 @@ export default function Routes() {
       <Route path={'/usuarios'} element={<UserListView />} />
       <Route path={'/usuarios/cadastro'} element={<UserCreateView />} />
       <Route path={'/usuarios/edicao/:id'} element={<UserEditView />} />
+      <Route path={'/usuarios/:id'} element={<UserDetailsView />} />
       <Route path={'/pagamentos/cadastro'} element={<PaymentCreateView />} />
       <Route path={'/pagamentos'} element={<PaymentListView />} />
       <Route path={'/fluxo-de-caixa/despesas'} element={<CashFlowExpensesView />} />

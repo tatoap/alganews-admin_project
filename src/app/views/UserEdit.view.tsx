@@ -1,14 +1,19 @@
-import { notification, Skeleton } from 'antd';
+import { Card, notification, Skeleton } from 'antd';
 import moment from 'moment';
 import { useCallback, useEffect } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { User, UserService } from 'tato_ap-sdk';
+import userPageTitle from '../../core/hooks/usePageTitle';
 import useUser from '../../core/hooks/useUser';
+import NotFoundError from '../components/NotFoundError';
 import UserForm from '../features/UserForm';
 
 export default function UserEditView() {
+  userPageTitle('Edição de usuário');
+
+  const navigate = useNavigate();
   const params = useParams<{ id: string }>();
-  const { user, fetchUser } = useUser();
+  const { user, fetchUser, notFound } = useUser();
 
   useEffect(() => {
     if (!isNaN(Number(params.id))) fetchUser(Number(params.id));
@@ -27,10 +32,22 @@ export default function UserEditView() {
     return <Navigate to={'/usuarios'} />;
   }
 
+  if (notFound)
+    return (
+      <Card>
+        <NotFoundError
+          title={'Usuário não encontrado'}
+          actionDestination='/usuarios'
+          actionTitle='Voltar para lista de usuários'
+        />
+      </Card>
+    );
+
   if (!user) return <Skeleton />;
 
-  function handleUserUpdate(user: User.Input) {
-    UserService.updateExistingUser(Number(params.id), user).then(() => {
+  async function handleUserUpdate(user: User.Input) {
+    await UserService.updateExistingUser(Number(params.id), user).then(() => {
+      navigate('/usuarios', { replace: true });
       notification.success({
         message: 'Usuário foi atualizado com sucesso',
       });
