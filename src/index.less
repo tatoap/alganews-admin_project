@@ -24,7 +24,15 @@
 @layout-trigger-height: 120px;
 
 .ant-layout-sider-zero-width-trigger {
-  background-color: @text-color;
+  color: @text-color;
+  background-color: transparent;
+  top: -64px;
+  left: 0;
+  height: 64px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #root > section.ant-layout {
@@ -41,29 +49,54 @@
   box-shadow: 0 0 20px -10px rgba(@text-color, 0.5);
 }
 
+.ant-menu-inline {
+  width: 100% !important;
+}
+
 #PageLayout {
   margin-top: 64px;
 }
 
-@media screen and (max-width: 411px) {
-}
-
 @media screen and (max-width: 991px) {
-  .ant-laytou-sider {
-    position: fixex !important;
+  .ant-layout-sider {
+    position: fixed !important;
     overflow: inherit !important;
     box-shadow: 5px 10px 10px grba(0, 0, 0, 0.07);
     z-index: 10;
     height: 100%;
   }
 
-  .ant-laytou-sider .ant-laytou-sider-children {
+  .ant-layout-sider .ant-layout-sider-children {
     overflow: hidden auto;
+  }
+
+  .ant-drawer-content-wrapper .ant-menu-light {
+    width: 100% !important;
   }
 }
 
 @media screen and (max-width: 1190px) {
   .ant-table-content {
     overflow: auto;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
+
+  * {
+    color: #000 !important;
+    border-color: #ccc !important;
+    background-color: #fff !important;
+  }
+
+  .ant-layout {
+    margin: 0 !important;
+  }
+
+  @page {
+    size: landscape;
   }
 }

@@ -26,9 +26,12 @@ import usePosts from '../../core/hooks/usePosts';
 import { Post } from 'tato_ap-sdk';
 import userPageTitle from '../../core/hooks/usePageTitle';
 import formatPhone from '../../core/utils/formatPhone';
+import NotFoundError from '../components/NotFoundError';
+import useBreadcrumb from '../../core/hooks/useBreadcrumb';
 
 export default function UserDetailsView() {
   userPageTitle('Detalhes do usuário');
+  useBreadcrumb('Usuário/Detalhes');
 
   const params = useParams<{ id: string }>();
   const { user, fetchUser, notFound, toggleUserStatus } = useUser();
@@ -49,7 +52,16 @@ export default function UserDetailsView() {
     return <Navigate to={'/usuarios'} />;
   }
 
-  if (notFound) return <Card>Usuário não encontrado</Card>;
+  if (notFound)
+    return (
+      <Card>
+        <NotFoundError
+          title={'Usuário não encontrado'}
+          actionDestination='/usuarios'
+          actionTitle='Voltar para lista de usuários'
+        />
+      </Card>
+    );
 
   if (!user) return <Skeleton />;
 
@@ -79,6 +91,9 @@ export default function UserDetailsView() {
             </Link>
             <Popconfirm
               title={user.active ? `Desabilitar ${user.name}?` : `Habilitar ${user.name}`}
+              disabled={
+                (user.active && !user.canBeDeactivated) || (!user.active && !user.canBeActivated)
+              }
               onConfirm={() => {
                 confirm({
                   icon: <WarningFilled style={{ color: '#09f' }} />,
@@ -96,7 +111,14 @@ export default function UserDetailsView() {
                 });
               }}
             >
-              <Button type={'primary'}>{user.active ? 'Desabilitar' : 'Habilitar'}</Button>
+              <Button
+                type={'primary'}
+                disabled={
+                  (user.active && !user.canBeDeactivated) || (!user.active && !user.canBeActivated)
+                }
+              >
+                {user.active ? 'Desabilitar' : 'Habilitar'}{' '}
+              </Button>
             </Popconfirm>
           </Space>
         </Space>

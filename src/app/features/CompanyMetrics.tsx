@@ -1,11 +1,15 @@
 import { Area, AreaConfig } from '@ant-design/charts';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import ptBR from 'date-fns/locale/pt-BR';
 import { useEffect, useState } from 'react';
 import { MetricService } from 'tato_ap-sdk';
+import { ForbiddenError } from 'tato_ap-sdk/dist/errors';
 import transformDataIntoAntdChart from '../../core/utils/transformDataIntoAntdChart';
+import Forbidden from '../components/Forbidden';
 
 export default function CompanyMetrics() {
+  const [forbidden, setForbidden] = useState(false);
+
   const [data, setData] = useState<
     {
       yearMonth: string;
@@ -17,8 +21,20 @@ export default function CompanyMetrics() {
   useEffect(() => {
     MetricService.getMonthlyRevenuesExpenses()
       .then(transformDataIntoAntdChart)
-      .then(setData);
+      .then(setData)
+      .catch((err) => {
+        console.log(err);
+        if (err instanceof ForbiddenError) {
+          setForbidden(true);
+          return;
+        }
+        throw err;
+      });
   }, []);
+
+  if (forbidden) {
+    return <Forbidden minHeight={256} />;
+  }
 
   const config: AreaConfig = {
     data,

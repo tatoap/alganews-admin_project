@@ -11,20 +11,33 @@ import {
   Tooltip,
   Row,
 } from 'antd';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { User } from 'tato_ap-sdk';
 import { EyeOutlined, EditOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import useUsers from '../../core/hooks/useUsers';
 import { ColumnProps } from 'antd/lib/table';
 import { Link } from 'react-router-dom';
 import format from 'date-fns/format';
+import Forbidden from '../components/Forbidden';
 
 export default function UserList() {
   const { users, fetchUsers, toggleUserStatus, fetching } = useUsers();
+  const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers().catch((err) => {
+      if (err?.data?.status === 403) {
+        setForbidden(true);
+        return;
+      }
+
+      throw err;
+    });
   }, [fetchUsers]);
+
+  if (forbidden) {
+    return <Forbidden />;
+  }
 
   const handleReset = (clearFilters: () => void) => {
     clearFilters();
@@ -115,8 +128,26 @@ export default function UserList() {
                     </Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label={'Ações'}>
-                    <Button size='small' icon={<EyeOutlined />} />
-                    <Button size='small' icon={<EditOutlined />} />
+                    <Tooltip title={'Editar'}>
+                      <Link to={`/usuarios/edicao/${user.id}`}>
+                        <Button
+                          type={'text'}
+                          size='small'
+                          icon={<EditOutlined />}
+                          style={{ border: 'none' }}
+                        />
+                      </Link>
+                    </Tooltip>
+                    <Tooltip title={'Visualizar'}>
+                      <Link to={`/usuarios/${user.id}`}>
+                        <Button
+                          type={'text'}
+                          size='small'
+                          icon={<EyeOutlined />}
+                          style={{ border: 'none' }}
+                        />
+                      </Link>
+                    </Tooltip>
                   </Descriptions.Item>
                 </Descriptions>
               );
@@ -187,6 +218,7 @@ export default function UserList() {
             render(active: boolean, user) {
               return (
                 <Switch
+                  disabled={(active && !user.canBeDeactivated) || (!active && !user.canBeActivated)}
                   onChange={() => {
                     toggleUserStatus(user);
                   }}
@@ -203,19 +235,18 @@ export default function UserList() {
             responsive: ['sm'],
             render(id: number) {
               return (
-                <>
-                  <Tooltip title={'Visualizar usuário'} placement={'left'}>
-                    <Link to={`/usuarios/${id}`}>
-                      <Button size='small' icon={<EyeOutlined />} />
-                    </Link>
-                  </Tooltip>
-
+                <Space>
                   <Tooltip title={'Editar usuário'} placement={'right'}>
                     <Link to={`/usuarios/edicao/${id}`}>
-                      <Button size='small' icon={<EditOutlined />} />
+                      <Button type='text' size='small' icon={<EditOutlined />} />
                     </Link>
                   </Tooltip>
-                </>
+                  <Tooltip title={'Visualizar usuário'} placement={'left'}>
+                    <Link to={`/usuarios/${id}`}>
+                      <Button type='text' size='small' icon={<EyeOutlined />} />
+                    </Link>
+                  </Tooltip>
+                </Space>
               );
             },
           },

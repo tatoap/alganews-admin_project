@@ -21,6 +21,7 @@ import CustomError from 'tato_ap-sdk/dist/CustomError';
 import { Moment } from 'moment';
 import { useNavigate } from 'react-router-dom';
 import CurrencyInput from '../components/CurrencyInput';
+import useAuth from '../../core/hooks/useAuth';
 
 type UserFormType = {
   createdAt: Moment;
@@ -40,6 +41,8 @@ export default function UserForm(props: UserFormProps) {
   const [avatar, setAvatar] = useState(props.user?.avatarUrls.default || '');
   const [loading, setLoading] = useState(false);
   const [isEditorRole, setIsEditorRole] = useState(props.user?.role === 'EDITOR');
+
+  const { user: authenticatedUser } = useAuth();
 
   const handleAvatarUpload = useCallback(async (file: File) => {
     const avatarSource = await FileService.upload(file);
@@ -237,11 +240,14 @@ export default function UserForm(props: UserFormProps) {
           >
             <Select
               placeholder={'Selecione um perfil'}
+              disabled={props.user && !props.user?.canSensitiveDataBeUpdated}
               onChange={(value) => setIsEditorRole(value === 'EDITOR')}
             >
               <Select.Option value={'EDITOR'}>Editor</Select.Option>
               <Select.Option value={'ASSISTANT'}>Assistente</Select.Option>
-              <Select.Option value={'MANAGER'}>Gerente</Select.Option>
+              <Select.Option value={'MANAGER'} disabled={authenticatedUser?.role !== 'MANAGER'}>
+                Gerente
+              </Select.Option>
             </Select>
           </Form.Item>
         </Col>
@@ -260,7 +266,11 @@ export default function UserForm(props: UserFormProps) {
               },
             ]}
           >
-            <Input type={'email'} placeholder={'E.g.: contato@renatoramos.com'} />
+            <Input
+              type={'email'}
+              placeholder={'E.g.: contato@renatoramos.com'}
+              disabled={props.user && !props.user?.canSensitiveDataBeUpdated}
+            />
           </Form.Item>
         </Col>
         <Col lg={24} xs={24}>
@@ -343,7 +353,11 @@ export default function UserForm(props: UserFormProps) {
                       },
                     ]}
                   >
-                    <MaskedInput mask={'(00) [0]0000-0000'} placeholder={'(11) 99999-9999'} />
+                    <MaskedInput
+                      mask='(00) [0]0000-0000'
+                      placeholder={'(11) 99999-9999'}
+                      disabled={props.user && !props.user?.canSensitiveDataBeUpdated}
+                    />
                   </Form.Item>
                 </Col>
                 <Col lg={8} xs={24}>
@@ -361,7 +375,7 @@ export default function UserForm(props: UserFormProps) {
                       },
                     ]}
                   >
-                    <MaskedInput mask={'000.000.000-00'} placeholder={'111.222.3333-44'} />
+                    <MaskedInput mask='000.000.000-00' placeholder={'111.222.3333-44'} />
                   </Form.Item>
                 </Col>
                 {isEditorRole && (

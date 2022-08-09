@@ -3,6 +3,7 @@ import moment from 'moment';
 import { useCallback, useEffect } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { User, UserService } from 'tato_ap-sdk';
+import useBreadcrumb from '../../core/hooks/useBreadcrumb';
 import userPageTitle from '../../core/hooks/usePageTitle';
 import useUser from '../../core/hooks/useUser';
 import NotFoundError from '../components/NotFoundError';
@@ -10,6 +11,7 @@ import UserForm from '../features/UserForm';
 
 export default function UserEditView() {
   userPageTitle('Edição de usuário');
+  useBreadcrumb('Usuário/Edição');
 
   const navigate = useNavigate();
   const params = useParams<{ id: string }>();
